@@ -18,6 +18,7 @@ CREATE TABLE "public"."Company" (
     "kontak_mitra" TEXT,
     "pic_partnership" TEXT,
     "logo_mitra_url" TEXT,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
 );
@@ -50,6 +51,7 @@ CREATE TABLE "public"."Approver" (
     "nik" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "Approver_pkey" PRIMARY KEY ("id")
 );

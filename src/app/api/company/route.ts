@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/postgres"; // pastikan prisma client-mu di sini
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -30,7 +32,14 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const company = await prisma.company.findMany();
+    const company = await prisma.company.findMany({
+      where: { 
+        deleted_at: null 
+      },
+      orderBy: {
+        id: 'desc',
+      }
+    });
 
     return NextResponse.json(company);
   } catch (err) {

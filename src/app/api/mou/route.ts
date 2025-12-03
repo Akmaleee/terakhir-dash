@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/postgres"; // sesuaikan dengan path kamu
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     // const mous = await prisma.progress.findMany({
@@ -27,12 +29,16 @@ export async function GET() {
             },
           },
           where: {
+            deleted_at: null,
             progress: {
               step: {
                   name: "MOU",
               }
             }
           },
+          orderBy: {
+        id: "desc",
+      },
         });
 
     return NextResponse.json(mous);

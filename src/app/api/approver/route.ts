@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/postgres"; // sesuaikan dengan path kamu
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
-        const approver = await prisma.approver.findMany({});
+        const approver = await prisma.approver.findMany({
+      where: { 
+        deleted_at: null 
+      },
+      orderBy: {
+        createdAt: 'desc',
+      }
+    });
 
         return NextResponse.json(approver);
     } catch (err) {

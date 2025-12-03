@@ -23,6 +23,7 @@ model Company {
   kontak_mitra     String?
   pic_partnership  String?
   logo_mitra_url   String?
+  deleted_at       DateTime?
   moms             Mom[]
   progress         Progress[]
   jiks             Jik[]
@@ -59,8 +60,10 @@ model Approver {
   jabatan   String?   // kalau internal
   nik       String?   // kalau internal
 
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deleted_at DateTime?
 
   // relasi ke jik / MoM
   momApprovers MomApprover[]
