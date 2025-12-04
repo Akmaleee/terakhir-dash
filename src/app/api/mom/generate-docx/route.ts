@@ -366,8 +366,8 @@ function createApproverTable(
                         alignment: AlignmentType.CENTER,
                         children: [
                             new TextRun({
-                                text: getInitial(name), // MENGGUNAKAN LOGIKA BARU (ANW)
-                                font: "Brush Script MT", 
+                                text: getInitial(name), 
+                                font: "Times New Roman", 
                                 size: 72, 
                                 bold: true,
                                 color: "000000"
