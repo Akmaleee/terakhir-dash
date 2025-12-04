@@ -2,14 +2,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
-// Hapus import 'runtime' jika tidak digunakan
-// import { runtime } from "./app/api/uploads/presign/route"; 
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ====================================================================
-// PERUBAHAN 1: Daftarkan semua rute yang perlu dilindungi
-// ====================================================================
+
+
 // Routes yang memerlukan authentication
 const protectedRoutes = [
   "/",
@@ -17,11 +14,12 @@ const protectedRoutes = [
   "/docs",
   "/company",
   "/mom",
-  "/jik-module", // <-- DITAMBAHKAN
-  "/nda",          // <-- DITAMBAHKAN
-  "/mou",          // <-- DITAMBAHKAN
-  "/msa",          // <-- DITAMBAHKAN
-  "/approver",     // <-- DITAMBAHKAN
+  "/jik-module", 
+  "/nda",          
+  "/mou",          
+  "/msa",          
+  "/approver",     
+  "/users"
 ];
 // ====================================================================
 
