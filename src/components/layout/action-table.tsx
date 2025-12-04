@@ -36,35 +36,25 @@ function getDynamicActions(type: string, status: string): string[] {
   if (!flow) return [];
 
   const normalizedStatus = status?.trim().toUpperCase();
-
   const isAgreement = ["NDA", "MOU", "MSA"].includes(upperType);
 
   if (isAgreement) {
     switch (normalizedStatus) {
-      case "SIRKULIR TSAT":
-        return ["Upload Sirkulir"];
-      case "SIGNING MITRA":
-        return ["Upload Signed"];
+      case "SIRKULIR TSAT": return ["Upload Sirkulir"];
+      case "SIGNING MITRA": return ["Upload Signed"];
       case "REVIEW MITRA":
-      case "REVIEW LEGAL TSAT":
-        return ["Approve"];
-      default:
-        return [];
+      case "REVIEW LEGAL TSAT": return ["Approve"];
+      default: return [];
     }
   }
 
   switch (normalizedStatus) {
     case "REVIEW MITRA":
-    case "REVIEW LEGAL TSAT":
-      return ["Approve"];
-    case "SIRKULIR TSAT":
-      return ["Upload"];
-    case "SIGNING MITRA":
-      return ["Sign"];
-    case "DRAFT":
-      return ["Send"];
-    default:
-      return [];
+    case "REVIEW LEGAL TSAT": return ["Approve"];
+    case "SIRKULIR TSAT": return ["Upload"];
+    case "SIGNING MITRA": return ["Sign"];
+    case "DRAFT": return ["Send"];
+    default: return [];
   }
 }
 
@@ -87,19 +77,24 @@ export function ActionTable({
   const isDeleting = deletingId === row.id;
   const showDocxButton = type.toLowerCase() === "jik" || type.toLowerCase() === "mom";
 
-  const hideViewEdit = ["nda", "mou", "msa","approver","company"].includes(type.toLowerCase());
+  // --- PERBAIKAN LOGIKA HIDE/SHOW ---
+  
+  // 1. Hide View: Hanya untuk 'approver' dan 'company'
+  const hideView = ["approver", "company"].includes(type.toLowerCase());
+
+  // 2. Hide Edit: Untuk 'nda', 'mou', 'msa', 'company'
+  // (Approver tidak ada di sini, jadi Edit akan muncul)
+  const hideEdit = ["nda", "mou", "msa", "company"].includes(type.toLowerCase());
 
   const hasApproved = row?.mom_approvers?.some((a: any) => a.is_approved === true);
   const showDocxSigned =
-    type.toLowerCase() === "mom" &&
-    currentStatus.trim().toLowerCase() === "signing mitra" ||
-    currentStatus.trim().toLowerCase() === "finish" &&
-    hasApproved;
+    (type.toLowerCase() === "mom" &&
+    currentStatus.trim().toLowerCase() === "signing mitra") ||
+    (currentStatus.trim().toLowerCase() === "finish" && hasApproved);
 
   const showDownload =
     (type === "jik" && currentStatus.trim().toLowerCase() === "finish") ||
-    (["msa", "mou", "nda"].some(keyword => type.includes(keyword)) && 
-    !isDraft);
+    (["msa", "mou", "nda"].some(keyword => type.includes(keyword)) && !isDraft);
 
   const displayActions =
     type.toLowerCase() === "mom"
@@ -111,10 +106,7 @@ export function ActionTable({
       const actualAction =
         type.toLowerCase() === "mom" && action === "Check" ? "Check" : action;
 
-      if (fallback) {
-        fallback(row);
-      }
-
+      if (fallback) fallback(row);
       if (onCustomAction) {
         onCustomAction(actualAction, row);
         return;
@@ -133,14 +125,18 @@ export function ActionTable({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-        {!hideViewEdit && (
+        
+        {/* Tombol View */}
+        {!hideView && (
           <DropdownMenuItem onClick={() => handleAction("View", onView)}>View</DropdownMenuItem>
         )}
-        {!hideViewEdit && (
+
+        {/* Tombol Edit */}
+        {!hideEdit && (
           <DropdownMenuItem onClick={() => handleAction("Edit", onEdit)}>Edit</DropdownMenuItem>
         )}
 
-        {showDownload && (          
+        {showDownload && (
           <DropdownMenuItem onClick={() => handleAction("Print", onPrint)}>Download</DropdownMenuItem>
         )}
 
@@ -154,16 +150,14 @@ export function ActionTable({
               {isGenerating ? "Generating..." : "Generate DOCX"}
             </DropdownMenuItem>
 
-            {showDocxSigned &&(
-              <>
-                <DropdownMenuItem
-                  onClick={() => handleAction("Generate DOCX Signed", undefined)}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {isGenerating ? "Generating..." : "Generate DOCX Signed"}
-                </DropdownMenuItem>
-              </>
+            {showDocxSigned && (
+              <DropdownMenuItem
+                onClick={() => handleAction("Generate DOCX Signed", undefined)}
+                disabled={isGenerating}
+              >
+                {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isGenerating ? "Generating..." : "Generate DOCX Signed"}
+              </DropdownMenuItem>
             )}
           </>
         )}
@@ -177,18 +171,11 @@ export function ActionTable({
 
         <DropdownMenuSeparator />
         
-        {/* 🔥 PERBAIKAN UTAMA DI SINI */}
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600"
           onClick={() => {
-            // Prioritas 1: Jika onDelete (prop langsung) ada, pakai itu (biasanya untuk NDA/MOU/MSA)
-            if (onDelete) {
-                onDelete(row.id);
-            } 
-            // Prioritas 2: Jika onDelete tidak ada, panggil onCustomAction "Delete" (untuk JIK/MOM)
-            else if (onCustomAction) {
-                onCustomAction("Delete", row);
-            }
+            if (onDelete) onDelete(row.id);
+            else if (onCustomAction) onCustomAction("Delete", row);
           }}
           disabled={isDeleting}
         >
@@ -199,6 +186,208 @@ export function ActionTable({
     </DropdownMenu>
   );
 }
+
+// "use client";
+
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { Button } from "@/components/ui/button";
+// import { MoreHorizontal, Loader2 } from "lucide-react";
+
+// interface ActionTableProps {
+//   row: any;
+//   type: string;
+//   onView?: (row: any) => void;
+//   onEdit?: (row: any) => void;
+//   onDelete?: (id: any) => void;
+//   onPrint?: (row: any) => void;
+//   onCustomAction?: (action: string, row: any) => void;
+//   generatingId?: number | null;
+//   deletingId?: number | null;
+// }
+
+// const STATUS_FLOW: Record<string, string[]> = {
+//   MOM: ["Review Mitra", "Signing Mitra", "Finish"],
+//   JIK: ["Sirkulir TSAT", "Finish"],
+//   NDA: ["Review Mitra", "Review Legal TSAT", "Sirkulir TSAT", "Signing Mitra", "Finish"],
+//   MOU: ["Review Mitra", "Review Legal TSAT", "Sirkulir TSAT", "Signing Mitra", "Finish"],
+//   MSA: ["Review Mitra", "Review Legal TSAT", "Sirkulir TSAT", "Signing Mitra", "Finish"],
+// };
+
+// function getDynamicActions(type: string, status: string): string[] {
+//   const upperType = type?.toUpperCase();
+//   const flow = STATUS_FLOW[upperType];
+//   if (!flow) return [];
+
+//   const normalizedStatus = status?.trim().toUpperCase();
+
+//   const isAgreement = ["NDA", "MOU", "MSA"].includes(upperType);
+
+//   if (isAgreement) {
+//     switch (normalizedStatus) {
+//       case "SIRKULIR TSAT":
+//         return ["Upload Sirkulir"];
+//       case "SIGNING MITRA":
+//         return ["Upload Signed"];
+//       case "REVIEW MITRA":
+//       case "REVIEW LEGAL TSAT":
+//         return ["Approve"];
+//       default:
+//         return [];
+//     }
+//   }
+
+//   switch (normalizedStatus) {
+//     case "REVIEW MITRA":
+//     case "REVIEW LEGAL TSAT":
+//       return ["Approve"];
+//     case "SIRKULIR TSAT":
+//       return ["Upload"];
+//     case "SIGNING MITRA":
+//       return ["Sign"];
+//     case "DRAFT":
+//       return ["Send"];
+//     default:
+//       return [];
+//   }
+// }
+
+// export function ActionTable({
+//   row,
+//   type,
+//   onView,
+//   onEdit,
+//   onDelete,
+//   onPrint,
+//   onCustomAction,
+//   generatingId,
+//   deletingId,
+// }: ActionTableProps) {
+//   const currentStatus = row?.progress?.status?.name || row?.status?.name || "Draft";
+//   const dynamicActions = getDynamicActions(type, currentStatus);
+//   const isDraft = currentStatus?.trim().toLowerCase() === "draft";
+
+//   const isGenerating = generatingId === row.id;
+//   const isDeleting = deletingId === row.id;
+//   const showDocxButton = type.toLowerCase() === "jik" || type.toLowerCase() === "mom";
+
+//   const hideViewEdit = ["nda", "mou", "msa","company"].includes(type.toLowerCase());
+
+//   const hasApproved = row?.mom_approvers?.some((a: any) => a.is_approved === true);
+//   const showDocxSigned =
+//     type.toLowerCase() === "mom" &&
+//     currentStatus.trim().toLowerCase() === "signing mitra" ||
+//     currentStatus.trim().toLowerCase() === "finish" &&
+//     hasApproved;
+
+//   const showDownload =
+//     (type === "jik" && currentStatus.trim().toLowerCase() === "finish") ||
+//     (["msa", "mou", "nda"].some(keyword => type.includes(keyword)) && 
+//     !isDraft);
+
+//   const displayActions =
+//     type.toLowerCase() === "mom"
+//       ? dynamicActions.map(a => (a === "Sign" ? "Check" : a))
+//       : dynamicActions;
+
+//   const handleAction = (action: string, fallback: ((row: any) => void) | undefined) => {
+//     if (onCustomAction) {
+//       const actualAction =
+//         type.toLowerCase() === "mom" && action === "Check" ? "Check" : action;
+
+//       if (fallback) {
+//         fallback(row);
+//       }
+
+//       if (onCustomAction) {
+//         onCustomAction(actualAction, row);
+//         return;
+//       }
+//     } else {
+//       fallback?.(row);
+//     }
+//   };
+
+//   return (
+//     <DropdownMenu>
+//       <DropdownMenuTrigger asChild>
+//         <Button variant="ghost" className="h-8 w-8 p-0">
+//           <MoreHorizontal className="h-4 w-4" />
+//         </Button>
+//       </DropdownMenuTrigger>
+
+//       <DropdownMenuContent align="end">
+//         {!hideViewEdit && (
+//           <DropdownMenuItem onClick={() => handleAction("View", onView)}>View</DropdownMenuItem>
+//         )}
+//         {!hideViewEdit && (
+//           <DropdownMenuItem onClick={() => handleAction("Edit", onEdit)}>Edit</DropdownMenuItem>
+//         )}
+
+//         {showDownload && (          
+//           <DropdownMenuItem onClick={() => handleAction("Print", onPrint)}>Download</DropdownMenuItem>
+//         )}
+
+//         {showDocxButton && (
+//           <>
+//             <DropdownMenuItem
+//               onClick={() => handleAction("Generate DOCX", undefined)}
+//               disabled={isGenerating}
+//             >
+//               {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+//               {isGenerating ? "Generating..." : "Generate DOCX"}
+//             </DropdownMenuItem>
+
+//             {showDocxSigned &&(
+//               <>
+//                 <DropdownMenuItem
+//                   onClick={() => handleAction("Generate DOCX Signed", undefined)}
+//                   disabled={isGenerating}
+//                 >
+//                   {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+//                   {isGenerating ? "Generating..." : "Generate DOCX Signed"}
+//                 </DropdownMenuItem>
+//               </>
+//             )}
+//           </>
+//         )}
+
+//         {displayActions.length > 0 && <DropdownMenuSeparator />}
+//         {displayActions.map((action) => (
+//           <DropdownMenuItem key={action} onClick={() => handleAction(action, undefined)}>
+//             {action}
+//           </DropdownMenuItem>
+//         ))}
+
+//         <DropdownMenuSeparator />
+        
+//         {/* 🔥 PERBAIKAN UTAMA DI SINI */}
+//         <DropdownMenuItem
+//           className="text-red-600 focus:text-red-600"
+//           onClick={() => {
+//             // Prioritas 1: Jika onDelete (prop langsung) ada, pakai itu (biasanya untuk NDA/MOU/MSA)
+//             if (onDelete) {
+//                 onDelete(row.id);
+//             } 
+//             // Prioritas 2: Jika onDelete tidak ada, panggil onCustomAction "Delete" (untuk JIK/MOM)
+//             else if (onCustomAction) {
+//                 onCustomAction("Delete", row);
+//             }
+//           }}
+//           disabled={isDeleting}
+//         >
+//           {isDeleting ? "Deleting..." : "Delete"}
+//         </DropdownMenuItem>
+        
+//       </DropdownMenuContent>
+//     </DropdownMenu>
+//   );
+// }
 
 // "use client";
 
