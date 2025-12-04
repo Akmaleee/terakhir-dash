@@ -432,8 +432,8 @@ function createJikInfoTable(jikData: Jik): Table {
     const rows: TableRow[] = [
         createInfoRow("Nama Inisiatif Kemitraan", jikData.initiative_partnership), 
         createInfoRow("Unit Kerja Pelaksana", jikData.nama_unit),
-        createInfoRow("Investment Value", jikData.invest_value),
-        createInfoRow("Contract Duration", jikData.contract_duration_years),
+        // createInfoRow("Investment Value", jikData.invest_value),
+        // createInfoRow("Contract Duration", jikData.contract_duration_years),
     ];
 
     return new Table({
